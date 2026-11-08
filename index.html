@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday 혜연쨩..♥</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Tailwind 커스텀 테마 설정 (JS로 HTML 내 상단 배치)
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        strawberry: {
+                            50: '#fff5f7',
+                            100: '#ffe3ec',
+                            200: '#ffd1dc',
+                            300: '#ffb3c6',
+                            400: '#ff85a2',
+                            500: '#ff4d6d',
+                            600: '#c9184a',
+                        },
+                        cream: '#fffdf9'
+                    },
+                    fontFamily: {
+                        gaegu: ['Gaegu', 'cursive'],
+                        sans: ['Noto Sans KR', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+
+    <!-- FontAwesome Icons & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- Firebase SDK (Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ⚠️ 파이어베이스 설정 키 입력
+        const firebaseConfig = {
+            apiKey: "AIzaSyDAdJFbIocaqhtHsxQrvj7YREk2VkgusSc",
+            authDomain: "birthday-1edd2.firebaseapp.com",
+            projectId: "birthday-1edd2",
+            storageBucket: "birthday-1edd2.firebasestorage.app",
+            messagingSenderId: "469079322380",
+            appId: "1:469079322380:web:98c4d86ece929f79a9e329"
+        };
+
+        window.saveDateToFirebase = async function(formattedDate, selectedOption) {
+            try {
+                if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+                    console.log("Firebase 키 미설정 모드: 로컬에 테스트 저장됩니다.");
+                    localStorage.setItem('saved_birthday_date', formattedDate);
+                    localStorage.setItem('saved_birthday_option', selectedOption);
+                    return { success: true, mode: 'local' };
+                }
+
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+
+                const docRef = await addDoc(collection(db, "birthday_gift_dates"), {
+                    recipient: "혜연",
+                    selectedDateFormatted: formattedDate,
+                    selectedOption: selectedOption,
+                    createdAt: serverTimestamp()
+                });
+
+                return { success: true, mode: 'firebase', id: docRef.id };
+            } catch (e) {
+                console.error("Firebase Error: ", e);
+                localStorage.setItem('saved_birthday_date', formattedDate);
+                localStorage.setItem('saved_birthday_option', selectedOption);
+                return { success: true, mode: 'fallback' };
+            }
+        };
+    </script>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 relative selection:bg-strawberry-300 selection:text-white">
+
+    <!-- 고정 상단 BGM 컨트롤러 -->
+    <div class="fixed top-4 right-4 z-50 flex flex-col items-end gap-2">
+        <button id="globalBgmBtn" onclick="toggleBGM()" class="kitsch-btn py-1.5 px-4 rounded-full text-xs font-bold text-strawberry-600 inline-flex items-center space-x-1 shadow-md">
+            <span id="bgmIcon">🎵</span> <span id="bgmText">생일 노래 켜기</span>
+        </button>
+
+        <select id="songSelect" onchange="changeSong(this.value)" class="text-xs bg-white border-2 border-strawberry-300 text-strawberry-600 font-bold rounded-xl px-2 py-1 shadow-sm focus:outline-none cursor-pointer">
+            <option value="orgel">🎀 파스텔 오르골</option>
+            <option value="piano">🎹 클래식 피아노</option>
+            <option value="kitsch">✨ 키치 오케스트라</option>
+        </select>
+    </div>
+
+    <!-- Sparkle Canvas Overlay -->
+    <canvas id="sparkleCanvas" class="fixed inset-0 pointer-events-none z-40"></canvas>
+
+    <!-- MAIN CONTAINER -->
+    <main class="w-full max-w-md mx-auto z-10 my-4">
+
+        <!-- SCREEN 1: 본인 확인 스크린 -->
+        <div id="screen1" class="kitsch-card p-6 md:p-8 text-center transition-all duration-500">
+            <div class="w-20 h-20 mx-auto mb-4 bg-strawberry-100 rounded-full border-2 border-strawberry-400 flex items-center justify-center text-4xl shadow-inner">
+                🎀
+            </div>
+
+            <h1 class="text-3xl md:text-4xl font-extrabold text-strawberry-600 mb-6 leading-tight">
+                생일자 본인이<br>맞습니까?
+            </h1>
+
+            <div class="flex flex-col space-y-4">
+                <button onclick="handleYesClick()" class="kitsch-btn py-4 px-6 rounded-2xl text-2xl font-bold text-strawberry-600 flex items-center justify-center">
+                    <span>네! 맞아요!</span>
+                </button>
+
+                <button onclick="handleNoClick()" class="kitsch-btn py-3 px-6 rounded-2xl text-xl font-bold text-gray-500 hover:text-strawberry-500">
+                    <span>아니오...</span>
+                </button>
+            </div>
+
+            <div id="noAlert" class="hidden mt-4 p-3 bg-strawberry-100 border-2 border-dashed border-strawberry-500 rounded-xl text-strawberry-600 text-lg font-bold animate-bounce">
+                주인이 아니면 들어올 수 없는디.. -.-
+            </div>
+        </div>
+
+        <!-- SCREEN 2: 축하 음악 & 가로형 사진 & 축하 문구 화면 -->
+        <div id="screen2" class="hidden kitsch-card p-6 md:p-8 text-center transition-all duration-500 opacity-0 relative">
+            <div class="flex justify-start mb-4">
+                <button onclick="goToScreen('screen2', 'screen1')" class="text-strawberry-500 font-bold text-sm bg-strawberry-100 px-3 py-1 rounded-full border border-strawberry-300 hover:bg-strawberry-200">
+                    ← 뒤로가기
+                </button>
+            </div>
+
+            <div class="w-full h-52 mx-auto mb-4 p-2 bg-white border-4 border-strawberry-300 rounded-2xl shadow-md relative overflow-hidden flex items-center justify-center">
+                <img id="birthdayPhoto" src="momonga.png" alt="Birthday Photo" class="w-full h-full object-cover rounded-xl" onerror="this.src='https://images.unsplash.com/photo-1513151233558-d860c5398176?w=600&auto=format&fit=crop&q=80'">
+            </div>
+
+            <h1 class="text-3xl md:text-4xl font-extrabold shimmer-text mb-6">
+                Happy Birthday<br>혜연쨩..♥
+            </h1>
+
+            <button onclick="goToScreen('screen2', 'screen3')" class="w-full kitsch-btn py-4 px-4 rounded-2xl text-xl font-bold text-strawberry-600 flex items-center justify-center">
+                <span>선물받을 날짜 선택하러 가기!</span>
+            </button>
+        </div>
+
+        <!-- SCREEN 3: 날짜 선택 화면 (달력) -->
+        <div id="screen3" class="hidden kitsch-card p-6 md:p-8 text-center transition-all duration-500 opacity-0 relative">
+            <div class="flex justify-start mb-2">
+                <button onclick="goToScreen('screen3', 'screen2')" class="text-strawberry-500 font-bold text-sm bg-strawberry-100 px-3 py-1 rounded-full border border-strawberry-300 hover:bg-strawberry-200">
+                    ← 뒤로가기
+                </button>
+            </div>
+
+            <div class="text-5xl mb-3">🎂</div>
+
+            <div class="bg-white border-2 border-strawberry-300 rounded-2xl p-4 shadow-sm mb-4">
+                <div class="flex items-center justify-between mb-4 pb-2 border-b border-strawberry-100">
+                    <span class="text-xl font-bold text-strawberry-600">2026년 11월</span>
+                    <span class="text-xs bg-strawberry-200 text-strawberry-600 font-bold px-2 py-1 rounded-md">NOVEMBER</span>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-strawberry-400 mb-2">
+                    <span class="text-red-500">일</span>
+                    <span>월</span>
+                    <span>화</span>
+                    <span>수</span>
+                    <span>목</span>
+                    <span>금</span>
+                    <span class="text-blue-400">토</span>
+                </div>
+
+                <div id="calendarDays" class="grid grid-cols-7 gap-1 text-center text-sm font-bold">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-center space-x-1 text-xs text-gray-500 font-bold bg-gray-100 p-2 rounded-xl border border-gray-200">
+                <span class="w-3 h-3 rounded-full bg-gray-300 inline-block border border-gray-400"></span>
+                <span>성희가 불가능한 날짜 ㅜ.ㅜ</span>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: 옵션 선택 화면 (2차 선택창) -->
+        <div id="screen4" class="hidden kitsch-card p-6 md:p-8 text-center transition-all duration-500 opacity-0 relative">
+            <div class="flex justify-start mb-2">
+                <button onclick="goToScreen('screen4', 'screen3')" class="text-strawberry-500 font-bold text-sm bg-strawberry-100 px-3 py-1 rounded-full border border-strawberry-300 hover:bg-strawberry-200">
+                    ← 뒤로가기
+                </button>
+            </div>
+
+            <div class="text-4xl mb-2">💌</div>
+            <h2 class="text-2xl font-bold text-strawberry-600 mb-1">옵션을 선택해줘!</h2>
+            <p class="text-sm text-strawberry-400 font-bold mb-5">
+                선택한 날짜: <span id="optionScreenDateText" class="text-strawberry-600 underline font-black">261109</span>
+            </p>
+
+            <div class="flex flex-col space-y-3 mb-2">
+                <button onclick="selectOption('선물만 받기..♥')" class="kitsch-btn py-3.5 px-4 rounded-xl text-lg font-bold text-strawberry-600">
+                    선물만 받기..♥
+                </button>
+                <button onclick="selectOption('카페까지 함께 한다..♥')" class="kitsch-btn py-3.5 px-4 rounded-xl text-lg font-bold text-strawberry-600">
+                    카페까지 함께 한다..♥
+                </button>
+                <button onclick="selectOption('밥까지 함께 먹는다..♥')" class="kitsch-btn py-3.5 px-4 rounded-xl text-lg font-bold text-strawberry-600">
+                    밥까지 함께 먹는다..♥
+                </button>
+                <button onclick="selectOption('전부 가능이라고 함..♥')" class="kitsch-btn py-3.5 px-4 rounded-xl text-lg font-bold text-strawberry-600 border-strawberry-500 bg-strawberry-50">
+                    전부 가능이라고 함..♥
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN 5: 완료 스크린 -->
+        <div id="screen5" class="hidden kitsch-card p-6 md:p-8 text-center transition-all duration-500 opacity-0 relative">
+            <div class="text-6xl mb-3">🎁</div>
+            <h1 class="text-3xl font-extrabold text-strawberry-600 mb-2">
+                약속 완료!
+            </h1>
+
+            <div class="p-4 bg-white border-2 border-dashed border-strawberry-400 rounded-2xl mb-4">
+                <p class="text-xs text-strawberry-400 mb-1 font-bold">선택 날짜</p>
+                <span id="displayFormattedDate" class="text-4xl font-extrabold text-strawberry-600 tracking-wider">261109</span>
+                
+                <div class="mt-3 pt-3 border-t border-strawberry-100">
+                    <p class="text-xs text-strawberry-400 mb-1 font-bold">선택 옵션</p>
+                    <span id="displaySelectedOption" class="text-lg font-bold text-strawberry-500">전부 가능이라고 함..♥</span>
+                </div>
+            </div>
+
+            <div class="flex space-x-2">
+                <button onclick="goToScreen('screen5', 'screen3')" class="w-1/2 kitsch-btn py-3 px-3 rounded-2xl text-base font-bold text-strawberry-600">
+                    수정하기
+                </button>
+                <button onclick="handleResetToFirst()" class="w-1/2 kitsch-btn py-3 px-3 rounded-2xl text-base font-bold text-gray-600">
+                    처음으로
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL: 날짜 선택 1차 확인 모달 -->
+    <div id="confirmModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="kitsch-card max-w-xs w-full p-6 text-center transform scale-95 transition-transform duration-200">
+            <div class="text-4xl mb-2">🗓️</div>
+            <h3 class="text-2xl font-bold text-strawberry-600 mb-2">날짜 확인</h3>
+            <p class="text-lg text-strawberry-500 mb-4 font-bold">
+                <span id="modalDateText" class="text-strawberry-600 underline font-black">261109</span>에 만날까?
+            </p>
+            <div class="flex space-x-2">
+                <button onclick="closeModal()" class="w-1/2 kitsch-btn py-2 rounded-xl font-bold text-gray-500 text-sm">
+                    다시 선택
+                </button>
+                <button onclick="confirmDateAndNext()" class="w-1/2 kitsch-btn py-2 rounded-xl font-bold text-strawberry-600 text-sm">
+                    다음으로! 💕
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="script.js"></script>
+</body>
+</html>
