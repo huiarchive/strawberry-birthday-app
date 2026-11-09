@@ -259,7 +259,7 @@ function buildCalendar() {
     const container = document.getElementById('calendarDays');
     container.innerHTML = '';
     const totalDays = 30;
-    const disabledDays = [11, 28];
+    const disabledDays = [10, 11, 27, 28];
 
     for (let day = 1; day <= totalDays; day++) {
         const dayBtn = document.createElement('button');
